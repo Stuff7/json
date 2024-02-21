@@ -109,6 +109,8 @@ impl<'a, 'b> Drop for JsonIter<'a, 'b> {
 pub enum JsonError {
   #[error("JSON doesn't match type")]
   NoMatch,
+  #[error("Missing field {0:?}")]
+  MissingField(&'static str),
   #[error("{0}:{1}: Expected type {2:?}, found type {3:?}")]
   TypeMismatch(usize, usize, &'static str, &'static str),
   #[error("{0}:{1}: Unexpected EOF")]
