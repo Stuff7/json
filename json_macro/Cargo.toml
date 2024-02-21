@@ -1,0 +1,13 @@
+[package]
+name = "json_macro"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "json_macro"
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"

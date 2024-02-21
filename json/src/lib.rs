@@ -4,6 +4,7 @@ mod state;
 mod traits;
 
 pub use block::JsonEntry;
+pub use json_macro::JsonParse;
 pub use traits::*;
 
 use block::JsonEntryIter;

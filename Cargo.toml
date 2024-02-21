@@ -1,15 +1,3 @@
-[package]
-name = "json"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-name = "json"
-path = "src/lib.rs"
-
-[dependencies]
-thiserror = "1.0"
-
-[[bin]]
-name = "json-bin"
-path = "src/bin.rs"
+[workspace]
+members = ["json", "json_macro"]
+resolver = "2"
