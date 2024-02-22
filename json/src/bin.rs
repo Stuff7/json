@@ -32,6 +32,13 @@ impl Debug for MainError {
 }
 
 #[derive(Debug, JsonParse)]
+enum Salutation {
+  Hello,
+  Hey,
+  Whatsup,
+}
+
+#[derive(Debug, JsonParse)]
 struct Preferences {
   theme: Box<str>,
   language: Box<str>,
@@ -50,6 +57,7 @@ struct RelatedUser {
   username: Box<str>,
   user_id: u64,
   is_active: bool,
+  salut: Salutation,
 }
 
 #[derive(Debug, JsonParse)]

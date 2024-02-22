@@ -108,6 +108,10 @@ impl<'a, 'b> Drop for JsonIter<'a, 'b> {
 
 #[derive(Debug, Error)]
 pub enum JsonError {
+  #[error("{0}:{1}: Expected variant from {2:?}, found {3:?}")]
+  VariantMismatch(usize, usize, &'static str, Box<str>),
+  #[error("Unknown enum variant {0}")]
+  InvalidVariant(Box<str>),
   #[error("JSON doesn't match type")]
   NoMatch,
   #[error("{0}:{1}: Missing field {2:?}")]

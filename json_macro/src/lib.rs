@@ -1,13 +1,14 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Attribute, Data, DeriveInput, Expr, Field, GenericArgument, Ident, Lit, PathArguments, Type};
+use syn::{Attribute, Data, DataEnum, DeriveInput, Expr, Field, GenericArgument, Ident, Lit, PathArguments, Type, Variant};
 
 #[proc_macro_derive(JsonParse, attributes(json))]
 pub fn derive_json(_item: TokenStream) -> TokenStream {
   let tree: DeriveInput = syn::parse(_item).unwrap();
   let st = match tree.data {
     Data::Struct(s) => s,
-    _ => panic!("JsonParse can only be derived for structs"),
+    Data::Enum(en) => return enum_json(en, tree.ident),
+    _ => panic!("JsonParse can only be derived for structs and enums"),
   };
 
   let DeriveInput { ident: struct_name, .. } = tree;
@@ -19,7 +20,15 @@ pub fn derive_json(_item: TokenStream) -> TokenStream {
     let arm = find_alias(&attrs, &field_name);
 
     let method = match find_type(&ty) {
-      JsonType::Custom => quote!(<#ty as json::JsonParser>::parse_json(value)?),
+      JsonType::Custom => quote! {
+        <#ty as json::JsonParser>::parse_json(value).map_err(|e| {
+          if let json::JsonError::InvalidVariant(v) = e {
+            json::JsonError::VariantMismatch(ln, col, std::any::type_name::<#ty>(), v)
+          } else {
+            e
+          }
+        })?
+      },
       JsonType::Array => quote!(Vec::parse_json(value)?),
       JsonType::Option => quote!(Option::parse_json(value)?),
       JsonType::Bool => quote!(value.bool(ln, col)?),
@@ -83,6 +92,34 @@ pub fn derive_json(_item: TokenStream) -> TokenStream {
           return Ok(#struct_name {
             #(#initialized_fields)*
           });
+        }
+
+        Err(json::JsonError::NoMatch)
+      }
+    }
+  }
+  .into()
+}
+
+fn enum_json(en: DataEnum, enum_name: Ident) -> TokenStream {
+  let arms = en.variants.iter().map(|variant| {
+    let Variant { ident, attrs, .. } = variant.clone();
+    let variant = ident;
+    let alias = find_alias(&attrs, &variant);
+
+    quote! {
+      #alias => #enum_name::#variant,
+    }
+  });
+
+  quote! {
+    impl json::JsonParser for #enum_name {
+      fn parse_json(json: json::JsonValue) -> json::JsonResult<Self> {
+        if let json::JsonValue::String(s) = json {
+          return Ok(match &*s {
+            #(#arms)*
+            _ => return Err(json::JsonError::InvalidVariant(s)),
+          })
         }
 
         Err(json::JsonError::NoMatch)
